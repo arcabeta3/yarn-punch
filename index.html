@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>某人不解釋</title>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { margin: 0; height: 100%; overflow: hidden; touch-action: none; }
+        body { font-family: 'M PLUS Rounded 1c', sans-serif; }
+        .scene { position: fixed; inset: 0; display: none; }
+        body[data-mode="fun"] #fun, body[data-mode="knit"] #knit { display: block; }
+
+        /* 模式切換 */
+        .mode-switch {
+            position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 50;
+            display: flex; gap: 4px; padding: 4px; border-radius: 14px;
+            background: rgba(255, 251, 244, 0.94); box-shadow: 0 8px 24px rgba(60, 40, 20, 0.22);
+        }
+        .mode-switch button {
+            border: 0; background: transparent; padding: 10px 20px; border-radius: 10px;
+            font: inherit; font-size: 15px; font-weight: 500; color: #7a6250; cursor: pointer;
+            transition: background 0.15s, color 0.15s; white-space: nowrap;
+        }
+        .mode-switch button.on { background: #4a3424; color: #fffaf0; font-weight: 800; }
+
+        /* ===== 歡樂模式 ===== */
+
+        #fun {
+            margin: 0;
+            overflow: hidden;
+            background-color: #e8dcc7; 
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: none;
+            /* 背景布紋 */
+            background-image: 
+                linear-gradient(45deg, rgba(0,0,0,0.02) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.02) 75%, rgba(0,0,0,0.02)),
+                linear-gradient(45deg, rgba(0,0,0,0.02) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.02) 75%, rgba(0,0,0,0.02));
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        #funCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fffdf9;
+            border: 4px solid #d1ccc0;
+            border-radius: 15px;
+            padding: 10px 20px;
+            box-shadow: inset 0 0 0 2px #fffdf9, inset 0 0 0 4px #ff6b6b, 0 8px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 800px;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn {
+            background-color: #f19066;
+            color: white;
+            border: 2px solid #c44569;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.1s;
+            box-shadow: 0 4px 0 #c44569;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #c44569;
+        }
+        .btn.active {
+            background-color: #c44569;
+            box-shadow: 0 0px 0 #8e2b47;
+            border-color: #8e2b47;
+            transform: translateY(4px);
+        }
+        .mode-btn {
+            background-color: #546de5;
+            border-color: #3dc1d3;
+            box-shadow: 0 4px 0 #3dc1d3;
+        }
+        .mode-btn.active {
+            background-color: #3dc1d3;
+            box-shadow: 0 0px 0 #3098a6;
+            border-color: #3098a6;
+        }
+        .magic-btn {
+            background-color: #9c88ff;
+            border-color: #8c7ae6;
+            box-shadow: 0 4px 0 #8c7ae6;
+        }
+        .magic-btn.active {
+            background-color: #8c7ae6;
+            box-shadow: 0 0px 0 #7158e2;
+            border-color: #7158e2;
+        }
+        #combo-text {
+            position: absolute;
+            top: 30%;
+            left: 5%;
+            font-size: 3.5rem;
+            color: #ff4757;
+            text-shadow: 3px 3px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 0 8px 0 rgba(0,0,0,0.1);
+            transform: rotate(-15deg);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.1s;
+        }
+    
+        /* ===== 針織模式 ===== */
+        #knit, #knit * { box-sizing: border-box; }
+
+        
+        #knit {
+            margin: 0; overflow: hidden; touch-action: none;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background: #b08a64;
+        }
+        #knitCanvas { display: block; width: 100vw; height: 100vh; cursor: none; }
+
+        .panel {
+            position: absolute; top: 20px; left: 20px; width: 236px; z-index: 10;
+            background: rgba(255, 251, 244, 0.94);
+            border-radius: 18px; padding: 18px 18px 20px;
+            box-shadow: 0 8px 24px rgba(60, 40, 20, 0.22);
+        }
+        .title {
+            margin: 0 0 4px; font-size: 22px; font-weight: 800; color: #4a3424; letter-spacing: 0.04em;
+        }
+        .label {
+            margin: 16px 0 8px; font-size: 12px; font-weight: 500; color: #9a8270; letter-spacing: 0.12em;
+        }
+        .seg { display: flex; gap: 4px; background: #efe4d3; border-radius: 12px; padding: 4px; }
+        .seg button {
+            flex: 1; border: 0; background: transparent; padding: 9px 0; border-radius: 9px;
+            font: inherit; font-size: 16px; font-weight: 500; color: #7a6250; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .seg button.on { background: #fff; color: #3a2a1c; font-weight: 800; box-shadow: 0 1px 4px rgba(60, 40, 20, 0.15); }
+
+        .combo {
+            position: absolute; top: 20px; right: 24px; z-index: 10; text-align: right;
+            pointer-events: none; opacity: 0; transition: opacity 0.2s;
+        }
+        .combo .num { font-size: 56px; font-weight: 800; color: #fffaf0; line-height: 1;
+            text-shadow: 0 3px 0 #8a5a36, 0 6px 14px rgba(60, 40, 20, 0.35); }
+        .combo .unit { font-size: 15px; font-weight: 800; color: #fffaf0; letter-spacing: 0.2em;
+            text-shadow: 0 2px 0 #8a5a36; }
+
+        @media (max-width: 600px) {
+            .panel { left: 12px; right: 12px; width: auto; top: 12px; padding: 14px; }
+            .title { font-size: 18px; }
+            .rows { display: flex; gap: 12px; }
+            .rows > div { flex: 1; }
+            .label { margin: 10px 0 6px; }
+            .combo { top: auto; bottom: 20px; right: 16px; }
+        }
+    
+    </style>
+</head>
+<body data-mode="knit">
+
+    <div class="mode-switch" id="modeSwitch">
+        <button data-v="fun">歡樂模式</button>
+        <button class="on" data-v="knit">針織模式</button>
+    </div>
+
+    <div class="scene" id="fun">
+
+
+    <div class="ui-panel">
+        <!-- 角色選擇區 -->
+        <div class="btn-group" id="character-btns">
+            <button class="btn active" onclick="spawnTarget('human', this)">人類</button>
+            <button class="btn" onclick="spawnTarget('boss', this)">老闆</button>
+            <button class="btn" onclick="spawnTarget('annoying', this)">機車人</button>
+            <button class="btn" onclick="spawnTarget('weird', this)">ㄎ一尢同事</button>
+            <button class="btn" onclick="spawnTarget('dino', this)">怪獸恐龍</button>
+            <button class="btn" onclick="spawnTarget('mouse', this)">老鼠</button>
+        </div>
+        <!-- 武器/模式選擇區 -->
+        <div class="btn-group" id="action-btns">
+            <button class="btn mode-btn active" onclick="setAction('punch', this)">🥊 拳套痛扁</button>
+            <button class="btn magic-btn" onclick="setAction('magic', this)">✨ Magic (變身魔法)</button>
+            <button class="btn mode-btn" style="background-color:#1dd1a1; border-color:#10ac84; box-shadow: 0 4px 0 #10ac84;" onclick="setMode('rampage', this)">🔥 大模式(割草)</button>
+        </div>
+    </div>
+
+    <div id="combo-text">10 HIT!</div>
+    <canvas id="funCanvas"></canvas>
+
+    
+    </div>
+
+    <div class="scene" id="knit">
+
+
+    <div class="panel">
+        <h1 class="title">某人不解釋</h1>
+        <div class="rows">
+            <div>
+                <div class="label">性別</div>
+                <div class="seg" id="genderSeg">
+                    <button class="on" data-v="male">男</button>
+                    <button data-v="female">女</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="combo" id="combo"><div class="num" id="comboNum">0</div><div class="unit">HIT</div></div>
+    <canvas id="knitCanvas"></canvas>
+
+    
+    </div>
+
+    <script>
+        // 模式切換
+        document.querySelectorAll('#modeSwitch button').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('#modeSwitch button').forEach(x => x.classList.remove('on'));
+            b.classList.add('on');
+            document.body.dataset.mode = b.dataset.v;
+        }));
+    </script>
+
+    <script>
+    // ===================== 歡樂模式 =====================
+    (() => {
+
+        const canvas = document.getElementById('funCanvas');
+        const ctx = canvas.getContext('2d');
+        const comboEl = document.getElementById('combo-text');
+
+        let width, height;
+        let mouse = { x: -1000, y: -1000, isDown: false };
+        let particles = [];
+        let projectiles = [];
+        let targets = [];
+        
+        let currentAction = 'punch'; // 'punch' or 'magic'
+        let gameMode = 'single'; // 'single' or 'rampage'
+        let combo = 0;
+        let comboTimer = 0;
+        let screenShake = 0;
+        let audioCtx;
+
+        const ALL_TYPES = ['human', 'boss', 'annoying', 'weird', 'dino', 'mouse'];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            if(targets.length === 0) spawnTarget('human');
+        }
+        window.addEventListener('resize', resize);
+
+        function playSound(type) {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'punch') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'squeak') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } else if (type === 'magic') {
+                // 魔法星星的音效 (高頻閃爍音)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'transform') {
+                // 變身音效 (彈簧聲)
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            }
+        }
+
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type; // 'cotton', 'yarn', 'button', 'star'
+                this.vx = (Math.random() - 0.5) * 20;
+                this.vy = (Math.random() - 0.5) * 20 - 5;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.01;
+                this.size = Math.random() * 15 + 5;
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.5;
+                
+                const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#ffffff'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                
+                if(this.type === 'star') {
+                    this.color = ['#f1c40f', '#f39c12', '#fff'][Math.floor(Math.random()*3)];
+                    this.decay = 0.04;
+                    this.vy = (Math.random() - 0.5) * 10 - 2;
+                }
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if(this.type !== 'star') this.vy += 0.8; // 重力
+                this.angle += this.vAngle;
+                this.life -= this.decay;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.globalAlpha = Math.max(0, this.life);
+                
+                if (this.type === 'cotton') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.arc(this.size*0.5, -this.size*0.5, this.size*0.8, 0, Math.PI * 2);
+                    ctx.arc(-this.size*0.5, -this.size*0.5, this.size*0.8, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'yarn') {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(-this.size, 0);
+                    ctx.quadraticCurveTo(0, -this.size*2, this.size, 0);
+                    ctx.stroke();
+                } else if (this.type === 'button') {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#333';
+                    const d = this.size * 0.3;
+                    ctx.beginPath(); ctx.arc(-d, -d, 2, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(d, -d, 2, 0, Math.PI*2); ctx.fill();
+                } else if (this.type === 'star') {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    for(let i=0; i<5; i++) {
+                        ctx.lineTo(Math.cos((18 + i*72)*Math.PI/180)*this.size, -Math.sin((18 + i*72)*Math.PI/180)*this.size);
+                        ctx.lineTo(Math.cos((54 + i*72)*Math.PI/180)*this.size*0.4, -Math.sin((54 + i*72)*Math.PI/180)*this.size*0.4);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        class MagicProjectile {
+            constructor(x, y, tx, ty) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.atan2(ty - y, tx - x);
+                const speed = 15;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 60;
+                this.angle = 0;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.angle += 0.2;
+                this.life--;
+                
+                // 拖尾粒子
+                if(this.life % 2 === 0) {
+                    particles.push(new Particle(this.x, this.y, 'star'));
+                }
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = '#f1c40f';
+                ctx.shadowColor = '#f39c12';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                for(let i=0; i<5; i++) {
+                    ctx.lineTo(Math.cos((18 + i*72)*Math.PI/180)*20, -Math.sin((18 + i*72)*Math.PI/180)*20);
+                    ctx.lineTo(Math.cos((54 + i*72)*Math.PI/180)*8, -Math.sin((54 + i*72)*Math.PI/180)*8);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 這個函數用來畫出「不織布」質感的形狀
+        function drawFelt(ctx, pathFunc, color, outlineColor, addStitching = true) {
+            ctx.save();
+            
+            // 1. 厚實陰影
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+            ctx.shadowOffsetY = 4;
+            ctx.shadowBlur = 4;
+            
+            // 2. 主體填充
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            pathFunc(ctx);
+            ctx.fill();
+            
+            // 清除陰影，準備畫邊框
+            ctx.shadowColor = 'transparent';
+            
+            // 3. 實體厚邊框 (布料邊緣)
+            ctx.strokeStyle = outlineColor || '#2f3640';
+            ctx.lineWidth = 6;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // 4. 虛線縫線 (刺繡感)
+            if (addStitching) {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 8]); // 虛線
+                // 稍微往內縮一點的錯覺 (如果路徑不複雜的話)
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        class Target {
+            constructor(x, y, type, scale = 1) {
+                this.basex = x;
+                this.basey = y;
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.scale = scale;
+                this.vx = 0;
+                this.vy = 0;
+                this.wobble = 0; // 搖晃角度
+                this.active = true;
+            }
+
+            hit(punchX, punchY) {
+                if(!this.active) return;
+                
+                this.vx = (this.x - punchX) * 0.1;
+                this.vy = -10; 
+                this.wobble = 1;
+
+                // 爆出棉花與毛線
+                for(let i=0; i<6; i++) particles.push(new Particle(this.x, this.y, 'cotton'));
+                for(let i=0; i<3; i++) particles.push(new Particle(this.x, this.y, 'yarn'));
+                if(Math.random() > 0.7) particles.push(new Particle(this.x, this.y, 'button'));
+
+                playSound('punch');
+                setTimeout(() => playSound('squeak'), 50);
+
+                screenShake = 5 + (combo * 0.5);
+                if(screenShake > 15) screenShake = 15;
+
+                combo++;
+                comboTimer = 60;
+                comboEl.innerText = `${combo} HIT!`;
+                comboEl.style.opacity = 1;
+                comboEl.style.transform = `rotate(${Math.random()*30 - 15}deg) scale(${1 + combo*0.05})`;
+            }
+
+            transform(newType) {
+                if(!this.active) return;
+                this.type = newType;
+                this.wobble = 1.5; // 變身時大搖晃
+                this.vy = -15; // 跳一下
+                
+                playSound('transform');
+                for(let i=0; i<20; i++) particles.push(new Particle(this.x, this.y, 'star'));
+            }
+
+            update() {
+                if(!this.active) return;
+                // 彈簧物理：回到原位
+                this.vx += (this.basex - this.x) * 0.1;
+                this.vy += (this.basey - this.y) * 0.1;
+                this.vx *= 0.8;
+                this.vy *= 0.8;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.wobble *= 0.85; 
+            }
+
+            draw(ctx) {
+                if(!this.active) return;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.scale(this.scale, this.scale);
+                ctx.rotate(this.wobble * Math.sin(Date.now() * 0.05) * 0.5); 
+
+                // 根據 type 繪製不同角色
+                // 中心點 (0,0) 約在人物胸口
+
+                switch(this.type) {
+                    case 'human':
+                        this.drawHuman(ctx, '#74b9ff', '#0984e3', 'casual');
+                        break;
+                    case 'boss':
+                        this.drawHuman(ctx, '#2d3436', '#636e72', 'suit', true); // 西裝, 胖
+                        break;
+                    case 'annoying':
+                        this.drawHuman(ctx, '#ff7675', '#d63031', 'spiky');
+                        break;
+                    case 'weird':
+                        this.drawHuman(ctx, '#a29bfe', '#6c5ce7', 'messy');
+                        break;
+                    case 'dino':
+                        this.drawDino(ctx);
+                        break;
+                    case 'mouse':
+                        this.drawMouse(ctx);
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            // 共用人形繪製邏輯
+            drawHuman(ctx, bodyColor, trimColor, style, isFat = false) {
+                const bodyW = isFat ? 90 : 60;
+                
+                // 雙腿
+                drawFelt(ctx, c => c.roundRect(-bodyW/2 + 5, 50, 20, 40, 10), '#000', '#333');
+                drawFelt(ctx, c => c.roundRect(bodyW/2 - 25, 50, 20, 40, 10), '#000', '#333');
+
+                // 身體
+                drawFelt(ctx, c => c.roundRect(-bodyW/2, -20, bodyW, 80, 20), bodyColor, trimColor);
+
+                // 服飾配件
+                if (style === 'suit') {
+                    // 領帶
+                    drawFelt(ctx, c => {
+                        c.moveTo(0, -20); c.lineTo(10, -20); c.lineTo(15, 30); c.lineTo(0, 45); c.lineTo(-15, 30); c.closePath();
+                    }, '#d63031', '#b2bec3', false);
+                }
+
+                // 雙手
+                drawFelt(ctx, c => c.roundRect(-bodyW/2 - 20, -10, 20, 50, 10), bodyColor, trimColor);
+                drawFelt(ctx, c => c.roundRect(bodyW/2, -10, 20, 50, 10), bodyColor, trimColor);
+
+                // 頭部
+                const headY = -60;
+                drawFelt(ctx, c => c.arc(0, headY, 45, 0, Math.PI*2), '#ffeaa7', '#fdcb6e');
+
+                // 頭髮
+                if(style === 'spiky') {
+                    drawFelt(ctx, c => {
+                        c.moveTo(-45, headY); c.lineTo(-30, headY-60); c.lineTo(-15, headY-40);
+                        c.lineTo(0, headY-70); c.lineTo(15, headY-40); c.lineTo(30, headY-60); c.lineTo(45, headY);
+                    }, '#d63031', '#b2bec3', false);
+                } else if (style === 'messy') {
+                    drawFelt(ctx, c => c.arc(0, headY-30, 50, 0, Math.PI), '#636e72', '#2d3436', false);
+                }
+
+                // 鼻子與嘴巴 (不畫眼睛)
+                drawFelt(ctx, c => c.arc(0, headY+10, 12, 0, Math.PI*2), '#fab1a0', '#e17055', false);
+                
+                // 嘴巴
+                ctx.strokeStyle = '#d63031';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                if(style === 'messy') {
+                    // 亂七八糟的嘴
+                    ctx.moveTo(-15, headY+30); ctx.lineTo(-5, headY+25); ctx.lineTo(5, headY+35); ctx.lineTo(15, headY+30);
+                } else if(style === 'suit') {
+                    // 臭臉
+                    ctx.moveTo(-15, headY+35); ctx.quadraticCurveTo(0, headY+25, 15, headY+35);
+                } else {
+                    // 平凡/機車
+                    ctx.moveTo(-15, headY+30); ctx.lineTo(15, headY+30);
+                }
+                ctx.stroke();
+            }
+
+            drawDino(ctx) {
+                // 尾巴
+                drawFelt(ctx, c => { c.moveTo(30, 20); c.quadraticCurveTo(100, 20, 80, -30); c.quadraticCurveTo(50, 0, 30, -20); }, '#55efc4', '#00b894');
+                // 背鰭
+                for(let i=0; i<3; i++) {
+                    drawFelt(ctx, c => { c.moveTo(-40 + i*20, -50 + i*10); c.lineTo(-60 + i*20, -70 + i*10); c.lineTo(-20 + i*20, -40 + i*10); }, '#fdcb6e', '#e17055', false);
+                }
+                // 腿 (粗)
+                drawFelt(ctx, c => c.roundRect(-30, 40, 30, 30, 10), '#55efc4', '#00b894');
+                drawFelt(ctx, c => c.roundRect(10, 40, 30, 30, 10), '#55efc4', '#00b894');
+                // 胖身體
+                drawFelt(ctx, c => c.roundRect(-45, -30, 90, 80, 40), '#55efc4', '#00b894');
+                // 淺色肚皮
+                drawFelt(ctx, c => c.roundRect(-25, -10, 50, 50, 20), '#81ecec', '#00cec9', false);
+                // 大頭
+                drawFelt(ctx, c => c.roundRect(-50, -90, 80, 70, 30), '#55efc4', '#00b894');
+                
+                // 巨大的嘴巴與牙齒
+                ctx.fillStyle = '#d63031';
+                ctx.beginPath(); ctx.arc(-20, -40, 20, 0, Math.PI); ctx.fill(); ctx.stroke();
+                // 牙齒
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.moveTo(-40, -40); ctx.lineTo(-30, -25); ctx.lineTo(-20, -40);
+                ctx.moveTo(-20, -40); ctx.lineTo(-10, -25); ctx.lineTo(0, -40);
+                ctx.fill();
+            }
+
+            drawMouse(ctx) {
+                // 尾巴
+                drawFelt(ctx, c => { c.moveTo(20, 30); c.bezierCurveTo(80, 30, 40, -40, 80, -20); }, '#dfe6e9', '#b2bec3', false);
+                // 腳
+                drawFelt(ctx, c => c.roundRect(-20, 40, 15, 20, 5), '#b2bec3', '#636e72');
+                drawFelt(ctx, c => c.roundRect(5, 40, 15, 20, 5), '#b2bec3', '#636e72');
+                // 圓身體
+                drawFelt(ctx, c => c.arc(0, 10, 40, 0, Math.PI*2), '#dfe6e9', '#b2bec3');
+                // 大耳朵
+                drawFelt(ctx, c => c.arc(-30, -50, 25, 0, Math.PI*2), '#dfe6e9', '#b2bec3');
+                drawFelt(ctx, c => c.arc(-30, -50, 12, 0, Math.PI*2), '#fab1a0', '#e17055', false); // 內耳
+                drawFelt(ctx, c => c.arc(30, -50, 25, 0, Math.PI*2), '#dfe6e9', '#b2bec3');
+                drawFelt(ctx, c => c.arc(30, -50, 12, 0, Math.PI*2), '#fab1a0', '#e17055', false); // 內耳
+                // 尖頭
+                drawFelt(ctx, c => { c.moveTo(-25, -20); c.lineTo(25, -20); c.lineTo(0, -70); c.closePath(); }, '#dfe6e9', '#b2bec3');
+                // 鼻子
+                drawFelt(ctx, c => c.arc(0, -70, 8, 0, Math.PI*2), '#ff7675', '#d63031', false);
+                // 鬍鬚
+                ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 2; ctx.setLineDash([]);
+                ctx.beginPath(); ctx.moveTo(-10, -60); ctx.lineTo(-30, -65); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-10, -55); ctx.lineTo(-30, -50); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(10, -60); ctx.lineTo(30, -65); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(10, -55); ctx.lineTo(30, -50); ctx.stroke();
+            }
+        }
+
+        function initTargets(type) {
+            targets = [];
+            if (gameMode === 'single') {
+                targets.push(new Target(width / 2, height / 2 + 50, type || ALL_TYPES[0], 1.2));
+            } else {
+                // 大模式
+                for(let i=0; i<12; i++) {
+                    const randomType = ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)];
+                    targets.push(new Target(
+                        width * 0.1 + Math.random() * width * 0.8,
+                        height * 0.2 + Math.random() * height * 0.6,
+                        randomType,
+                        0.6
+                    ));
+                }
+            }
+        }
+
+        window.spawnTarget = function(type, btn) {
+            gameMode = 'single';
+            initTargets(type);
+            
+            // 更新按鈕UI
+            if (btn) {
+                document.querySelectorAll('#character-btns .btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            
+            // 如果原本在大模式，切回單機要重置模式按鈕
+            document.querySelectorAll('#action-btns .mode-btn').forEach(b => b.classList.remove('active'));
+            if(currentAction === 'punch') document.querySelector('#action-btns .mode-btn:nth-child(1)').classList.add('active');
+        }
+
+        window.setAction = function(action, btn) {
+            currentAction = action;
+            gameMode = 'single';
+            if(targets.length > 1) initTargets(ALL_TYPES[0]); // 如果在大模式，切回單體
+
+            if (btn) {
+                document.querySelectorAll('#action-btns .btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+        }
+
+        window.setMode = function(mode, btn) {
+            gameMode = mode;
+            currentAction = 'punch'; // 大模式強制用拳套比較爽
+            initTargets();
+
+            if (btn) {
+                document.querySelectorAll('#action-btns .btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+        }
+
+        let gloveOffset = 0;
+        let isPunching = false;
+        let magicAngle = 0;
+
+        function triggerAction(x, y) {
+            if (currentAction === 'punch') {
+                isPunching = true;
+                gloveOffset = 100;
+                
+                targets.forEach(t => {
+                    const dist = Math.hypot(t.x - x, t.y - y);
+                    if (dist < 120 * t.scale) t.hit(x, y);
+                });
+
+                setTimeout(() => { isPunching = false; }, 100);
+            } else if (currentAction === 'magic') {
+                // 發射魔法星星
+                playSound('magic');
+                projectiles.push(new MagicProjectile(mouse.x, mouse.y, x, y));
+            }
+        }
+
+        // 滑鼠與觸控
+        canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        canvas.addEventListener('mousedown', e => { 
+            if(currentAction === 'magic') {
+                 triggerAction(e.clientX, e.clientY);
+            } else {
+                 triggerAction(mouse.x, mouse.y); 
+            }
+        });
+        
+        canvas.addEventListener('touchmove', e => { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; });
+        canvas.addEventListener('touchstart', e => {
+            mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY;
+            triggerAction(mouse.x, mouse.y);
+        });
+
+        function drawPlayerTool(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            if (currentAction === 'punch') {
+                if(isPunching) {
+                    ctx.translate(0, -gloveOffset);
+                    ctx.scale(1.2, 1.2);
+                }
+                // 畫不織布拳套
+                drawFelt(ctx, c => {
+                    c.arc(0, 0, 45, 0, Math.PI * 2); 
+                    c.arc(-25, 15, 22, 0, Math.PI * 2); 
+                }, '#ff4757', '#c23616');
+                
+                // 拳套綁帶
+                drawFelt(ctx, c => c.rect(-25, 40, 50, 20), '#ffffff', '#bdc3c7', false);
+                
+                if(isPunching) gloveOffset *= 0.6; 
+            } else if (currentAction === 'magic') {
+                // 畫魔法棒
+                magicAngle += 0.05;
+                ctx.rotate(Math.sin(magicAngle) * 0.2);
+                
+                // 棒子
+                drawFelt(ctx, c => c.roundRect(-5, 0, 10, 80, 5), '#ff9ff3', '#f368e0', false);
+                // 星星頭
+                ctx.translate(0, -10);
+                drawFelt(ctx, c => {
+                    for(let i=0; i<5; i++) {
+                        c.lineTo(Math.cos((18 + i*72)*Math.PI/180)*30, -Math.sin((18 + i*72)*Math.PI/180)*30);
+                        c.lineTo(Math.cos((54 + i*72)*Math.PI/180)*12, -Math.sin((54 + i*72)*Math.PI/180)*12);
+                    }
+                    c.closePath();
+                }, '#feca57', '#ff9f43');
+            }
+
+            ctx.restore();
+        }
+
+        function animate() {
+            if (document.body.dataset.mode !== 'fun') { requestAnimationFrame(animate); return; }
+            ctx.clearRect(0, 0, width, height);
+            
+            ctx.save();
+            if(screenShake > 0.5) {
+                ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+                screenShake *= 0.85;
+            }
+
+            // 更新與繪製目標
+            targets.forEach(t => {
+                t.update();
+                t.draw(ctx);
+            });
+
+            // 更新與繪製魔法投射物
+            for(let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i];
+                p.update();
+                p.draw(ctx);
+                
+                // 碰撞偵測 (魔法星星擊中目標)
+                let hitTarget = null;
+                for(let t of targets) {
+                    if(Math.hypot(t.x - p.x, t.y - p.y) < 80 * t.scale) {
+                        hitTarget = t; break;
+                    }
+                }
+                
+                if(hitTarget || p.life <= 0) {
+                    if(hitTarget) {
+                        // 變身為不同的隨機角色
+                        let newType = ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)];
+                        while(newType === hitTarget.type && ALL_TYPES.length > 1) {
+                            newType = ALL_TYPES[Math.floor(Math.random() * ALL_TYPES.length)];
+                        }
+                        hitTarget.transform(newType);
+                    }
+                    projectiles.splice(i, 1);
+                }
+            }
+
+            // 更新與繪製粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw(ctx);
+                if (particles[i].life <= 0 || particles[i].y > height) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            ctx.restore();
+
+            // 繪製玩家工具
+            if (mouse.x > -100) {
+                drawPlayerTool(ctx, mouse.x, mouse.y);
+            }
+
+            if(comboTimer > 0) {
+                comboTimer--;
+                if(comboTimer === 0) {
+                    combo = 0;
+                    comboEl.style.opacity = 0;
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // 初始化
+        resize();
+        animate();
+    
+    })();
+    </script>
+
+    <script>
+    // ===================== 針織模式 =====================
+    (() => {
+
+        const canvas = document.getElementById('knitCanvas');
+        const ctx = canvas.getContext('2d');
+        const comboEl = document.getElementById('combo');
+        const comboNum = document.getElementById('comboNum');
+
+        let width, height, floorY;
+        let bgCanvas = null;
+        let mouse = { x: -1000, y: -1000 };
+        let particles = [];
+        let targets = [];
+
+        let gender = 'male';
+        let gameMode = 'single';
+        let combo = 0, comboTimer = 0, screenShake = 0;
+        let audioCtx;
+
+        function makeRng(s) { return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+
+        // ================= 針織繪製工具 =================
+        function knit(c, rnd, path, bx, by, bw, bh, base, light, dark, s = 1, outline = true) {
+            c.save();
+            c.shadowColor = 'rgba(50,30,10,0.3)'; c.shadowOffsetY = 4 * s; c.shadowBlur = 6 * s;
+            c.fillStyle = dark; c.beginPath(); path(); c.fill();
+            c.restore();
+            c.save(); c.beginPath(); path(); c.clip();
+            c.fillStyle = dark; c.fillRect(bx, by, bw, bh);
+            const sx = 8 * s, sy = 6 * s;
+            for (let y = by; y < by + bh + sy; y += sy) {
+                for (let x = bx; x < bx + bw + sx; x += sx) {
+                    const jitter = rnd() * 0.12;
+                    for (const [dx, rot] of [[-2.2 * s, -0.55], [2.2 * s, 0.55]]) {
+                        c.save(); c.translate(x + dx, y); c.rotate(rot);
+                        c.fillStyle = base; c.beginPath(); c.ellipse(0, 0, 2.6 * s, 4.6 * s, 0, 0, Math.PI * 2); c.fill();
+                        c.fillStyle = light; c.beginPath(); c.ellipse(-0.5 * s, -1.4 * s, 1.3 * s, 2.4 * s, 0, 0, Math.PI * 2); c.fill();
+                        if (jitter > 0.08) { c.fillStyle = 'rgba(0,0,0,0.08)'; c.beginPath(); c.ellipse(0, 0, 2.6 * s, 4.6 * s, 0, 0, Math.PI * 2); c.fill(); }
+                        c.restore();
+                    }
+                }
+            }
+            const cx = bx + bw / 2, cy = by + bh / 2, r = Math.max(bw, bh) * 0.7;
+            const g = c.createRadialGradient(cx - bw * 0.15, cy - bh * 0.2, r * 0.1, cx, cy, r);
+            g.addColorStop(0, 'rgba(255,255,255,0.12)'); g.addColorStop(0.6, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(40,20,0,0.32)');
+            c.fillStyle = g; c.fillRect(bx, by, bw, bh);
+            c.restore();
+            if (outline) {
+                c.save(); c.strokeStyle = dark; c.lineWidth = 2.5 * s; c.beginPath(); path(); c.stroke();
+                c.strokeStyle = light; c.globalAlpha = 0.45; c.lineWidth = 1 * s; c.setLineDash([1 * s, 3 * s]); c.beginPath(); path(); c.stroke();
+                c.restore();
+            }
+        }
+        function knitButton(c, x, y, r, col) {
+            c.save(); c.shadowColor = 'rgba(0,0,0,0.3)'; c.shadowOffsetY = 2; c.shadowBlur = 3;
+            c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); c.restore();
+            c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, r * 0.75, 0, Math.PI * 2); c.stroke();
+            c.fillStyle = 'rgba(0,0,0,0.45)';
+            [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => { c.beginPath(); c.arc(x + a * r * 0.28, y + b * r * 0.28, Math.max(1.2, r * 0.12), 0, Math.PI * 2); c.fill(); });
+        }
+
+        // ================= 針織辦公室背景 =================
+        function buildBackground() {
+            const cv = document.createElement('canvas');
+            cv.width = width; cv.height = height;
+            const c = cv.getContext('2d');
+            const rnd = makeRng(4242);
+            const k = Math.max(0.55, Math.min(1.2, height / 900));
+            const fy = floorY;
+
+            // 牆面
+            knit(c, rnd, () => c.rect(0, 0, width, fy), 0, 0, width, fy, '#b8916a', '#d4b08a', '#7e5c3e', 1.8, false);
+            // 窗戶
+            const wx = width * 0.8, wy = fy * 0.18, ww = 220 * k, wh = 170 * k;
+            knit(c, rnd, () => c.roundRect(wx - ww / 2 - 14 * k, wy - 14 * k, ww + 28 * k, wh + 28 * k, 14 * k), wx - ww / 2 - 14 * k, wy - 14 * k, ww + 28 * k, wh + 28 * k, '#f2e2c4', '#fff6e4', '#c9ad84', 1.1);
+            knit(c, rnd, () => c.roundRect(wx - ww / 2, wy, ww, wh, 8 * k), wx - ww / 2, wy, ww, wh, '#9fd0ee', '#d4ecfa', '#5f9ec4', 1.1);
+            knit(c, rnd, () => c.rect(wx - 6 * k, wy, 12 * k, wh), wx - 6 * k, wy, 12 * k, wh, '#f2e2c4', '#fff6e4', '#c9ad84', 0.8);
+            knit(c, rnd, () => c.rect(wx - ww / 2, wy + wh / 2 - 6 * k, ww, 12 * k), wx - ww / 2, wy + wh / 2 - 6 * k, ww, 12 * k, '#f2e2c4', '#fff6e4', '#c9ad84', 0.8);
+
+            // 地板
+            knit(c, rnd, () => c.rect(0, fy, width, height - fy), 0, fy, width, height - fy, '#86603f', '#a37c58', '#55391f', 1.8, false);
+            // 踢腳板
+            knit(c, rnd, () => c.rect(0, fy - 14 * k, width, 20 * k), 0, fy - 14 * k, width, 20 * k, '#f2e2c4', '#fff6e4', '#c9ad84', 1.0);
+
+            // 書桌
+            const dx = width * 0.2;
+            const desk = ['#dba45e', '#f3c88a', '#a8732f'];
+            knit(c, rnd, () => c.roundRect(dx - 130 * k, fy - 100 * k, 22 * k, 104 * k, 6 * k), dx - 130 * k, fy - 100 * k, 22 * k, 104 * k, ...desk, 1);
+            knit(c, rnd, () => c.roundRect(dx + 108 * k, fy - 100 * k, 22 * k, 104 * k, 6 * k), dx + 108 * k, fy - 100 * k, 22 * k, 104 * k, ...desk, 1);
+            knit(c, rnd, () => c.roundRect(dx + 10 * k, fy - 100 * k, 98 * k, 62 * k, 8 * k), dx + 10 * k, fy - 100 * k, 98 * k, 62 * k, ...desk, 1);
+            knitButton(c, dx + 59 * k, fy - 69 * k, 7 * k, '#e8574a');
+            knit(c, rnd, () => c.roundRect(dx - 150 * k, fy - 128 * k, 300 * k, 30 * k, 12 * k), dx - 150 * k, fy - 128 * k, 300 * k, 30 * k, ...desk, 1);
+            // 螢幕
+            knit(c, rnd, () => c.roundRect(dx - 12 * k, fy - 165 * k, 24 * k, 40 * k, 4 * k), dx - 12 * k, fy - 165 * k, 24 * k, 40 * k, '#8d8d96', '#b6b6be', '#55555e', 0.9);
+            knit(c, rnd, () => c.roundRect(dx - 75 * k, fy - 262 * k, 150 * k, 104 * k, 14 * k), dx - 75 * k, fy - 262 * k, 150 * k, 104 * k, '#8d8d96', '#b6b6be', '#55555e', 1);
+            knit(c, rnd, () => c.roundRect(dx - 62 * k, fy - 250 * k, 124 * k, 78 * k, 8 * k), dx - 62 * k, fy - 250 * k, 124 * k, 78 * k, '#9fd0ee', '#d4ecfa', '#5f9ec4', 0.9);
+            // 馬克杯
+            knit(c, rnd, () => c.roundRect(dx + 88 * k, fy - 165 * k, 32 * k, 38 * k, 6 * k), dx + 88 * k, fy - 165 * k, 32 * k, 38 * k, '#e8574a', '#ff8f84', '#a8302a', 0.8);
+            c.save(); c.strokeStyle = '#a8302a'; c.lineWidth = 6 * k; c.beginPath(); c.arc(dx + 122 * k, fy - 146 * k, 9 * k, -Math.PI / 2, Math.PI / 2); c.stroke(); c.restore();
+
+            // 椅子
+            const cx = width * 0.8;
+            const seat = ['#8fae7e', '#b9d4a8', '#5b7a4c'];
+            knit(c, rnd, () => c.roundRect(cx - 60 * k, fy - 26 * k, 120 * k, 14 * k, 7 * k), cx - 60 * k, fy - 26 * k, 120 * k, 14 * k, '#6e6e76', '#9a9aa2', '#3e3e46', 0.8);
+            [[-55, 0], [55, 0], [0, 4]].forEach(([ox, oy]) => knitButton(c, cx + ox * k, fy - 8 * k + oy * k, 9 * k, '#3e3e46'));
+            knit(c, rnd, () => c.roundRect(cx - 8 * k, fy - 88 * k, 16 * k, 64 * k, 4 * k), cx - 8 * k, fy - 88 * k, 16 * k, 64 * k, '#6e6e76', '#9a9aa2', '#3e3e46', 0.8);
+            knit(c, rnd, () => c.roundRect(cx - 56 * k, fy - 236 * k, 112 * k, 130 * k, 32 * k), cx - 56 * k, fy - 236 * k, 112 * k, 130 * k, ...seat, 1);
+            knitButton(c, cx, fy - 172 * k, 8 * k, '#f2c94c');
+            knit(c, rnd, () => c.roundRect(cx - 66 * k, fy - 112 * k, 132 * k, 28 * k, 12 * k), cx - 66 * k, fy - 112 * k, 132 * k, 28 * k, ...seat, 1);
+
+            return cv;
+        }
+
+        // ================= 刷毛布偶角色（哭臉） =================
+        const SPRITE_W = 260, SPRITE_H = 280, OX = 130, OY = 170;
+        const sprites = {};
+
+        function buildSprite(type, seed) {
+            const cv = document.createElement('canvas');
+            cv.width = SPRITE_W; cv.height = SPRITE_H;
+            const c = cv.getContext('2d');
+            const rnd = makeRng(seed);
+            c.translate(OX, OY);
+
+            function plush(path, cx, cy, r, light, mid, dark) {
+                c.save(); c.shadowColor = 'rgba(60,35,15,0.3)'; c.shadowOffsetY = 4; c.shadowBlur = 8;
+                c.fillStyle = mid; c.beginPath(); path(); c.fill(); c.restore();
+                c.save(); c.beginPath(); path(); c.clip();
+                const g = c.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.05, cx, cy, r * 1.15);
+                g.addColorStop(0, light); g.addColorStop(0.55, mid); g.addColorStop(1, dark);
+                c.fillStyle = g; c.fillRect(cx - r * 1.6, cy - r * 1.6, r * 3.2, r * 3.2);
+                const n = Math.floor(r * r * 0.5);
+                for (let i = 0; i < n; i++) {
+                    const x = cx + (rnd() - 0.5) * r * 2.6, y = cy + (rnd() - 0.5) * r * 2.6, a = rnd() * Math.PI, l = 1.5 + rnd() * 2;
+                    c.strokeStyle = rnd() > 0.5 ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.07)'; c.lineWidth = 1;
+                    c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); c.stroke();
+                }
+                c.restore();
+                c.save(); c.strokeStyle = dark; c.globalAlpha = 0.45; c.lineWidth = 1.5; c.beginPath(); path(); c.stroke(); c.restore();
+            }
+            function seam(pathFn) {
+                c.save(); c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 1.6; c.setLineDash([3, 3]); c.lineCap = 'round';
+                c.beginPath(); pathFn(); c.stroke(); c.restore();
+            }
+            function beanEye(x, y) {
+                c.fillStyle = '#1e1a18';
+                c.beginPath(); c.ellipse(x, y, 6, 7.5, 0, 0, Math.PI * 2); c.fill();
+            }
+            function blush(x, y) { c.save(); c.globalAlpha = 0.3; c.fillStyle = '#ff7a7a'; c.beginPath(); c.ellipse(x, y, 10, 6, 0, 0, Math.PI * 2); c.fill(); c.restore(); }
+            function frown(y) {
+                c.strokeStyle = '#8a3a2a'; c.lineWidth = 3; c.lineCap = 'round';
+                c.beginPath(); c.arc(0, y + 8, 7, Math.PI + 0.2, -0.2); c.stroke();
+            }
+            function floorShadow() {
+                const s = c.createRadialGradient(0, 65, 2, 0, 65, 62);
+                s.addColorStop(0, 'rgba(40,20,5,0.3)'); s.addColorStop(1, 'rgba(40,20,5,0)');
+                c.fillStyle = s; c.beginPath(); c.ellipse(0, 65, 62, 11, 0, 0, Math.PI * 2); c.fill();
+            }
+            function feet() {
+                const SHOE = ['#6a5a50', '#3e332d', '#221c18'];
+                plush(() => c.ellipse(-20, 55, 17, 10, 0, 0, Math.PI * 2), -20, 55, 17, ...SHOE);
+                plush(() => c.ellipse(20, 55, 17, 10, 0, 0, Math.PI * 2), 20, 55, 17, ...SHOE);
+            }
+            const SK = ['#fff1d6', '#f7d9a8', '#d9ad70'];
+            const HAIR = ['#a77a55', '#7a5236', '#4e3220'];
+            const YEL = ['#ffe98a', '#f5c518', '#b8900a'];
+
+            floorShadow();
+
+            if (type === 'male') {
+                feet();
+                plush(() => c.ellipse(0, 20, 38, 32, 0, 0, Math.PI * 2), 0, 20, 38, '#bfe0ff', '#6aaee8', '#2f6fae');
+                seam(() => { c.moveTo(0, -7); c.lineTo(0, 47); });
+                plush(() => c.arc(0, -55, 56, 0, Math.PI * 2), 0, -55, 56, ...SK);
+                plush(() => { c.moveTo(-60, -40); c.bezierCurveTo(-76, -146, 76, -146, 60, -40); c.quadraticCurveTo(58, -62, 46, -72); c.quadraticCurveTo(6, -54, -30, -70); c.quadraticCurveTo(-52, -62, -60, -40); c.closePath(); }, 0, -90, 58, ...HAIR);
+                c.save(); c.strokeStyle = 'rgba(40,22,10,0.35)'; c.lineWidth = 2; c.lineCap = 'round';
+                c.beginPath(); c.moveTo(-20, -112); c.quadraticCurveTo(-22, -92, -28, -72); c.stroke();
+                c.restore();
+                blush(-36, -32); blush(36, -32);
+                frown(-30);
+            }
+
+            if (type === 'female') {
+                plush(() => { c.moveTo(-58, -57); c.bezierCurveTo(-66, -115, 66, -115, 58, -57); c.quadraticCurveTo(70, -10, 50, 13); c.quadraticCurveTo(0, 23, -50, 13); c.quadraticCurveTo(-70, -10, -58, -57); }, 0, -45, 62, ...HAIR);
+                feet();
+                plush(() => { c.moveTo(-26, -7); c.quadraticCurveTo(0, -15, 26, -7); c.quadraticCurveTo(50, 37, 42, 51); c.quadraticCurveTo(0, 61, -42, 51); c.quadraticCurveTo(-50, 37, -26, -7); }, 0, 25, 42, ...YEL);
+                seam(() => { c.moveTo(-40, 43); c.quadraticCurveTo(0, 53, 40, 43); });
+                plush(() => c.arc(0, -55, 56, 0, Math.PI * 2), 0, -55, 56, ...SK);
+                plush(() => { c.arc(0, -57, 57, Math.PI, Math.PI * 2); c.quadraticCurveTo(40, -75, 20, -73); c.quadraticCurveTo(0, -85, -20, -73); c.quadraticCurveTo(-40, -75, -57, -57); c.closePath(); }, 0, -90, 45, ...HAIR);
+                blush(-36, -30); blush(36, -30);
+                frown(-28);
+            }
+            return cv;
+        }
+        sprites.male = buildSprite('male', 101);
+        sprites.female = buildSprite('female', 202);
+
+        // ================= 針織拳套 =================
+        const GLOVE_W = 170, GLOVE_H = 180, GX = 85, GY = 75;
+        const gloveSprite = (() => {
+            const cv = document.createElement('canvas');
+            cv.width = GLOVE_W; cv.height = GLOVE_H;
+            const c = cv.getContext('2d');
+            const rnd = makeRng(777);
+            c.translate(GX, GY);
+            knit(c, rnd, () => { c.arc(0, 0, 46, 0, Math.PI * 2); c.moveTo(-25 + 22, 15); c.arc(-25, 15, 22, 0, Math.PI * 2); }, -50, -48, 100, 96, '#e8574a', '#ff8f84', '#a8302a', 0.9);
+            knit(c, rnd, () => c.roundRect(-30, 38, 60, 28, 8), -30, 38, 60, 28, '#f2e2c4', '#fff6e4', '#c9ad84', 0.75);
+            c.save(); c.strokeStyle = 'rgba(160,130,90,0.5)'; c.lineWidth = 1.5;
+            for (let x = -24; x <= 24; x += 8) { c.beginPath(); c.moveTo(x, 41); c.lineTo(x, 63); c.stroke(); }
+            c.restore();
+            knitButton(c, 18, -8, 7, '#f2c94c');
+            return cv;
+        })();
+
+        // ================= 尺寸 =================
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            floorY = Math.round(height * 0.72);
+            bgCanvas = buildBackground();
+            initTargets();
+        }
+        window.addEventListener('resize', resize);
+
+        // ================= 音效 =================
+        function playSound(type) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const t = audioCtx.currentTime;
+            if (type === 'punch') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+                gain.gain.setValueAtTime(0.5, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(); osc.stop(t + 0.1);
+            } else if (type === 'squeak') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, t); osc.frequency.exponentialRampToValueAtTime(300, t + 0.15);
+                gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+                osc.start(); osc.stop(t + 0.15);
+            }
+        }
+
+        // ================= 粒子 =================
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x; this.y = y; this.type = type;
+                this.vx = (Math.random() - 0.5) * 20;
+                this.vy = (Math.random() - 0.5) * 20 - 5;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.01;
+                this.size = Math.random() * 15 + 5;
+                this.angle = Math.random() * Math.PI * 2;
+                this.vAngle = (Math.random() - 0.5) * 0.5;
+                const colors = ['#e8574a', '#8fae7e', '#6aaee8', '#f5c518', '#f2e2c4'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                if (type === 'tear') { this.size = Math.random() * 5 + 4; this.vy = -Math.random() * 10 - 4; this.decay = 0.025; }
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vy += 0.8;
+                this.angle += this.vAngle;
+                this.life -= this.decay;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.globalAlpha = Math.max(0, this.life);
+                if (this.type === 'tear') {
+                    ctx.rotate(Math.atan2(this.vy, this.vx) - Math.PI / 2);
+                    ctx.fillStyle = 'rgba(130,195,255,0.9)';
+                    ctx.beginPath(); ctx.moveTo(0, -this.size * 1.8);
+                    ctx.quadraticCurveTo(this.size, 0, 0, this.size); ctx.quadraticCurveTo(-this.size, 0, 0, -this.size * 1.8); ctx.fill();
+                    ctx.restore(); return;
+                }
+                ctx.rotate(this.angle);
+                if (this.type === 'cotton') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.arc(this.size * 0.5, -this.size * 0.5, this.size * 0.8, 0, Math.PI * 2);
+                    ctx.arc(-this.size * 0.5, -this.size * 0.5, this.size * 0.8, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'yarn') {
+                    ctx.strokeStyle = this.color; ctx.lineWidth = 4; ctx.lineCap = 'round';
+                    ctx.beginPath(); ctx.moveTo(-this.size, 0); ctx.quadraticCurveTo(0, -this.size * 2, this.size, 0); ctx.stroke();
+                } else if (this.type === 'button') {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath(); ctx.arc(0, 0, this.size, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#333';
+                    const d = this.size * 0.3;
+                    ctx.beginPath(); ctx.arc(-d, -d, 2, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(d, -d, 2, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        // ================= 目標 =================
+        class Target {
+            constructor(x, y, type, scale = 1) {
+                this.basex = x; this.basey = y;
+                this.x = x; this.y = y;
+                this.type = type; this.scale = scale;
+                this.vx = 0; this.vy = 0;
+                this.wobble = 0; this.squash = 0;
+            }
+            hit(punchX) {
+                this.vx = (this.x - punchX) * 0.1;
+                this.vy = -10;
+                this.wobble = 1; this.squash = 1;
+
+                for (let i = 0; i < 6; i++) particles.push(new Particle(this.x, this.y, 'cotton'));
+                for (let i = 0; i < 3; i++) particles.push(new Particle(this.x, this.y, 'yarn'));
+                if (Math.random() > 0.7) particles.push(new Particle(this.x, this.y, 'button'));
+
+                playSound('punch');
+                setTimeout(() => playSound('squeak'), 50);
+
+                screenShake = Math.min(15, 5 + combo * 0.5);
+                combo++; comboTimer = 60;
+                comboNum.textContent = combo;
+                comboEl.style.opacity = 1;
+                comboNum.style.transform = `scale(${Math.min(1.6, 1 + combo * 0.03)})`;
+            }
+            update() {
+                this.vx += (this.basex - this.x) * 0.1;
+                this.vy += (this.basey - this.y) * 0.1;
+                this.vx *= 0.8; this.vy *= 0.8;
+                this.x += this.vx; this.y += this.vy;
+                this.wobble *= 0.85;
+                this.squash *= 0.82;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.scale(this.scale, this.scale);
+                ctx.rotate(this.wobble * Math.sin(Date.now() * 0.05) * 0.5);
+                const sq = this.squash * Math.cos(Date.now() * 0.04);
+                ctx.scale(1 + sq * 0.22, 1 - sq * 0.22);
+                ctx.drawImage(sprites[this.type], -OX, -OY);
+                ctx.restore();
+            }
+        }
+
+        function initTargets() {
+            targets = [];
+            if (gameMode === 'single') {
+                const s = Math.max(1.1, Math.min(1.9, height / 470));
+                targets.push(new Target(width / 2, floorY - 30 * s, gender, s));
+            }
+        }
+
+        // ================= 介面 =================
+        function bindSeg(id, onChange) {
+            const seg = document.getElementById(id);
+            seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+                seg.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+                b.classList.add('on');
+                onChange(b.dataset.v);
+            }));
+        }
+        bindSeg('genderSeg', v => { gender = v; initTargets(); });
+
+        // ================= 操作 =================
+        let gloveOffset = 0;
+        let isPunching = false;
+
+        function punch(x, y) {
+            isPunching = true; gloveOffset = 100;
+            targets.forEach(t => { if (Math.hypot(t.x - x, t.y - y) < 120 * t.scale) t.hit(x); });
+            setTimeout(() => { isPunching = false; }, 100);
+        }
+
+        canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        canvas.addEventListener('mouseleave', () => { mouse.x = -1000; });
+        canvas.addEventListener('mousedown', e => { mouse.x = e.clientX; mouse.y = e.clientY; punch(mouse.x, mouse.y); });
+        canvas.addEventListener('touchmove', e => { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; });
+        canvas.addEventListener('touchstart', e => {
+            mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY;
+            punch(mouse.x, mouse.y);
+        });
+
+        function drawGlove(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            if (isPunching) { ctx.translate(0, -gloveOffset); ctx.scale(1.2, 1.2); gloveOffset *= 0.6; }
+            ctx.drawImage(gloveSprite, -GX, -GY);
+            ctx.restore();
+        }
+
+        function animate() {
+            if (document.body.dataset.mode !== 'knit') { requestAnimationFrame(animate); return; }
+            ctx.save();
+            if (screenShake > 0.5) {
+                ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+                screenShake *= 0.85;
+            }
+            ctx.drawImage(bgCanvas, -20, -20, width + 40, height + 40);
+
+            targets.forEach(t => { t.update(); t.draw(ctx); });
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update(); particles[i].draw(ctx);
+                if (particles[i].life <= 0 || particles[i].y > height) particles.splice(i, 1);
+            }
+            ctx.restore();
+
+            if (mouse.x > -100) drawGlove(ctx, mouse.x, mouse.y);
+
+            if (comboTimer > 0) {
+                comboTimer--;
+                if (comboTimer === 0) { combo = 0; comboEl.style.opacity = 0; }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        resize();
+        animate();
+    
+    })();
+    </script>
+</body>
+</html>
